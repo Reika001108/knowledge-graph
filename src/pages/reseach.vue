@@ -164,6 +164,23 @@
   import { Network } from 'vis-network';
   import 'vis-network/styles/vis-network.css';
 
+  // ---------- 防抖函数 ----------
+  /**
+   * 防抖函数：在连续触发后等待一段时间再执行
+   * @param {Function} fn - 要执行的函数
+   * @param {number} delay - 延迟时间（毫秒）
+   * @returns {Function} 防抖后的函数
+   */
+  const debounce = (fn, delay) => {
+    let timer = null;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        fn.apply(this, args);
+      }, delay);
+    };
+  };
+
   // ---------- 用户及主题相关 ----------
   const showDropdown = ref(false);
   const avatarWrapper = ref(null);
@@ -545,6 +562,20 @@
     });
   };
 
+  // ---------- 窗口 resize 防抖处理 ----------
+  // 创建防抖版本的 resize 处理函数（200ms 延迟）
+  const handleResize = debounce(() => {
+    if (networkInstance) {
+      // 重新计算布局并适配新尺寸
+      networkInstance.redraw();
+      // 可选：重新适配视图
+      networkInstance.fit();
+    }
+  }, 200);
+
+  // 保存引用用于清理
+  let resizeHandler = null;
+
   // ---------- 生命周期 ----------
   onMounted(() => {
     const token = localStorage.getItem('authToken');
@@ -567,6 +598,10 @@
 
     document.addEventListener('click', handleClickOutside);
     timer = setInterval(updateTime, 1000);
+    
+    // 添加防抖的 resize 监听器
+    resizeHandler = handleResize;
+    window.addEventListener('resize', resizeHandler);
   });
 
   onBeforeUnmount(() => {
@@ -576,6 +611,11 @@
     }
     document.removeEventListener('click', handleClickOutside);
     if (timer) clearInterval(timer);
+    
+    // 清理 resize 监听器
+    if (resizeHandler) {
+      window.removeEventListener('resize', resizeHandler);
+    }
   });
 </script>
 

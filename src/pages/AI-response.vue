@@ -87,8 +87,6 @@
                   :class="{ 'streaming-message': msg.isStreaming }"
                   v-html="formatMessage(msg.content)"
                 ></div>
-                <!-- 添加打字机光标（仅当消息正在流式输出时显示） -->
-                <!-- <span v-if="msg.isStreaming" class="typing-cursor">···</span> -->
                 <div
                   v-if="msg.sources && msg.sources.length"
                   class="message-sources"
@@ -162,12 +160,6 @@ const userInfo = ref(null);
 const currentTime = ref(new Date().toLocaleTimeString());
 const isDark = ref(false);
 
-// 计算显示的用户名
-// const displayName = computed(() => {
-//   if (!userInfo.value) return '';
-//   return userInfo.value.username || (userInfo.value.email ? userInfo.value.email.split('@')[0] : '用户');
-// });
-
 const toggleTheme = () => {
   isDark.value = !isDark.value;
 };
@@ -205,21 +197,47 @@ const logout = () => {
   showDropdown.value = false;
 };
 
+// ---------- 防抖和节流工具函数 ----------
+/**
+ * 防抖函数
+ * @param {Function} fn 需要防抖的函数
+ * @param {number} delay 延迟时间(ms)
+ * @returns {Function} 防抖后的函数
+ */
+const debounce = (fn, delay) => {
+  let timer = null;
+  return function(...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+};
+
+/**
+ * 节流函数
+ * @param {Function} fn 需要节流的函数
+ * @param {number} delay 延迟时间(ms)
+ * @returns {Function} 节流后的函数
+ */
+const throttle = (fn, delay) => {
+  let lastTime = 0;
+  return function(...args) {
+    const now = Date.now();
+    if (now - lastTime >= delay) {
+      fn.apply(this, args);
+      lastTime = now;
+    }
+  };
+};
+
 // ---------- 智能问答相关 ----------
 const userInput = ref("");
 const messages = ref([]);
 const isLoading = ref(false);
 const messagesContainer = ref(null);
 const currentStreamingIndex = ref(-1); // 当前正在流式输出的消息索引
-
-// 示例问题（可取消注释使用）
-// const exampleQuestions = [
-//   "乔布斯和苹果公司的关系",
-//   "Vue.js 的作者是谁",
-//   "人工智能有哪些应用领域",
-//   "介绍一下深度学习",
-//   "React 和 Vue 的区别",
-// ];
+let scrollTimer = null; // 滚动定时器
 
 /**
  * 流式调用 AI API - 支持打字机效果
@@ -286,9 +304,9 @@ const callStreamAI = async (question) => {
               const currentMsg = messages.value[currentStreamingIndex.value];
               if (currentMsg && currentMsg.isStreaming) {
                 currentMsg.content += data.content;
-                // 触发视图更新并滚动
+                // 触发视图更新并滚动（使用节流优化）
                 await nextTick();
-                scrollToBottom();
+                throttledScrollToBottom();
               }
             } else if (data.type === 'done') {
               // 流式传输完成，移除流式标记
@@ -326,6 +344,25 @@ const callStreamAI = async (question) => {
 };
 
 /**
+ * 滚动到底部（普通版本）
+ */
+const scrollToBottom = async () => {
+  await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+};
+
+/**
+ * 滚动到底部（节流版本）
+ */
+const throttledScrollToBottom = throttle(() => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+}, 100);
+
+/**
  * 备用：非流式调用（兼容旧接口）
  */
 const callRealAI = async (question) => {
@@ -350,8 +387,10 @@ const callRealAI = async (question) => {
   };
 };
 
-// 发送消息
-const sendMessage = async () => {
+/**
+ * 实际发送消息的逻辑
+ */
+const sendMessageLogic = async () => {
   const text = userInput.value.trim();
   if (!text || isLoading.value) return;
 
@@ -373,6 +412,9 @@ const sendMessage = async () => {
   }
 };
 
+// 防抖版本的发送消息（300ms防抖）
+const sendMessage = debounce(sendMessageLogic, 300);
+
 // 添加消息（普通消息）
 const addMessage = (role, content, sources = []) => {
   const now = new Date();
@@ -387,12 +429,6 @@ const addMessage = (role, content, sources = []) => {
     time: timeStr,
     isStreaming: false
   });
-};
-
-// 发送示例问题
-const sendExample = (question) => {
-  userInput.value = question;
-  sendMessage();
 };
 
 // 清空对话
@@ -415,22 +451,36 @@ const formatMessage = (content) => {
   return marked.parse(content);
 };
 
-// 滚动到底部
-const scrollToBottom = async () => {
-  await nextTick();
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+// 节流版本的滚动事件处理（用于加载历史消息）
+const handleScroll = throttle(() => {
+  // 预留用于加载历史消息的功能
+  const container = messagesContainer.value;
+  if (container && container.scrollTop < 100 && messages.value.length > 0) {
+    // 滚动到顶部时可以考虑加载历史消息
+    // console.log('接近顶部，可以加载历史消息');
   }
-};
+}, 200);
 
 // 监听消息变化自动滚动
 watch(messages, async () => {
   await scrollToBottom();
 }, { deep: true });
 
-const handleScroll = () => {
-  // 预留
+// ---------- 输入防抖（可选，用于实时提示）----------
+let inputDebounceTimer = null;
+const onInputChange = () => {
+  if (inputDebounceTimer) clearTimeout(inputDebounceTimer);
+  inputDebounceTimer = setTimeout(() => {
+    // 可以在这里添加输入提示或自动补全功能
+    // 例如：实时搜索建议、输入提示等
+    if (userInput.value.trim().length > 0) {
+      // console.log('用户输入:', userInput.value);
+    }
+  }, 500);
 };
+
+// 暴露给模板使用的方法（如果需要输入提示）
+// 注意：需要在模板中 @input="onInputChange" 绑定
 
 // ---------- 生命周期 ----------
 onMounted(() => {
@@ -459,6 +509,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
   if (timer) clearInterval(timer);
+  if (scrollTimer) clearTimeout(scrollTimer);
+  if (inputDebounceTimer) clearTimeout(inputDebounceTimer);
 });
 </script>
 
@@ -1052,29 +1104,6 @@ onBeforeUnmount(() => {
     transform: scale(1);
     opacity: 1;
   }
-}
-
-/* 打字机光标动画 */
-.typing-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1.2em;
-  background-color: #8B5CF6;
-  margin-left: 2px;
-  animation: blink 1s infinite;
-  vertical-align: middle;
-  position: absolute;
-  bottom: 12px;
-  right: -6px;
-}
-
-.message-row.user .typing-cursor {
-  background-color: white;
-}
-
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
 }
 
 /* 流式消息样式 */

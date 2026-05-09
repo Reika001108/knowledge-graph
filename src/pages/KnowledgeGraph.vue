@@ -88,6 +88,40 @@
   });
 
   let shouldFitAfterRender = false;
+  
+  // ========== 防抖和节流函数 ==========
+  /**
+   * 防抖函数：在连续触发后等待一段时间再执行
+   * @param {Function} fn - 要执行的函数
+   * @param {number} delay - 延迟时间（毫秒）
+   * @returns {Function} 防抖后的函数
+   */
+  const debounce = (fn, delay) => {
+    let timer = null;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        fn.apply(this, args);
+      }, delay);
+    };
+  };
+
+  /**
+   * 节流函数：在规定时间内只执行一次
+   * @param {Function} fn - 要执行的函数
+   * @param {number} delay - 节流时间（毫秒）
+   * @returns {Function} 节流后的函数
+   */
+  const throttle = (fn, delay) => {
+    let lastTime = 0;
+    return function(...args) {
+      const now = Date.now();
+      if (now - lastTime >= delay) {
+        lastTime = now;
+        fn.apply(this, args);
+      }
+    };
+  };
 
   // 切换主题
   const toggleTheme = () => {
@@ -309,8 +343,8 @@
     }
   };
 
-  // 缩放控制
-  const zoomIn = () => {
+  // 缩放控制（使用节流优化频繁操作）
+  const zoomIn = throttle(() => {
     if (!chartInstance) return;
     const option = chartInstance.getOption();
     const series = option.series[0];
@@ -319,9 +353,9 @@
       series.force.edgeLength = Math.max(50, series.force.edgeLength * 0.8);
       chartInstance.setOption(option, { notMerge: false });
     }
-  };
+  }, 100); // 100ms内只执行一次
 
-  const zoomOut = () => {
+  const zoomOut = throttle(() => {
     if (!chartInstance) return;
     const option = chartInstance.getOption();
     const series = option.series[0];
@@ -330,9 +364,9 @@
       series.force.edgeLength = Math.min(500, series.force.edgeLength * 1.2);
       chartInstance.setOption(option, { notMerge: false });
     }
-  };
+  }, 100);
 
-  const fitToView = () => {
+  const fitToView = throttle(() => {
     if (!chartInstance) return;
     const option = chartInstance.getOption();
     const series = option.series[0];
@@ -341,7 +375,7 @@
       chartInstance.setOption(option, { notMerge: false });
       shouldFitAfterRender = true;
     }
-  };
+  }, 200); // 200ms内只执行一次
 
   const fitView = () => {
     if (!chartInstance) return;
@@ -382,6 +416,16 @@
     chartInstance.setOption(option, { notMerge: false });
   };
 
+  // 使用防抖优化的 resize 处理函数
+  const handleResize = debounce(() => {
+    if (chartInstance) {
+      chartInstance.resize();
+    }
+  }, 200); // 200ms 防抖延迟
+
+  // 保存引用用于清理
+  let resizeHandler = null;
+
   // 生命周期
   onMounted(() => {
     const token = localStorage.getItem('authToken');
@@ -412,13 +456,21 @@
     });
 
     fetchData();
-    window.addEventListener('resize', () => chartInstance.resize());
+    
+    // 使用防抖版本的 resize 监听器
+    resizeHandler = handleResize;
+    window.addEventListener('resize', resizeHandler);
+    
     document.addEventListener('click', handleClickOutside);
     timer = setInterval(updateTime, 1000);
   });
 
   onBeforeUnmount(() => {
-    window.removeEventListener('resize', () => chartInstance.resize());
+    // 清理 resize 监听器
+    if (resizeHandler) {
+      window.removeEventListener('resize', resizeHandler);
+    }
+    
     document.removeEventListener('click', handleClickOutside);
     if (timer) clearInterval(timer);
     if (chartInstance) {
