@@ -12,27 +12,27 @@
 
 普通用户
 
-![](E:\Reika\web\object\vue\src\pages\img\1.png)
+![知识图谱展示](src/pages/img/1.png)
 
-![2](E:\Reika\web\object\vue\src\pages\img\2.png)
+![关键词查询](src/pages/img/2.png)
 
-![3](E:\Reika\web\object\vue\src\pages\img\3.png)
+![智能问答](src/pages/img/3.png)
 
-![4](E:\Reika\web\object\vue\src\pages\img\4.png)
+![个人中心](src/pages/img/4.png)
 
 
 
 后台管理员用户
 
-![](E:\Reika\web\object\vue\src\pages\img\5.png)
+![主页](src/pages/img/5.png)
 
-![6](E:\Reika\web\object\vue\src\pages\img\6.png)
+![用户管理](src/pages/img/6.png)
 
-![7](E:\Reika\web\object\vue\src\pages\img\7.png)
+![节点管理](src/pages/img/7.png)
 
-![8](E:\Reika\web\object\vue\src\pages\img\8.png)
+![数据统计](src/pages/img/8.png)
 
-![9](E:\Reika\web\object\vue\src\pages\img\9.png)
+![反馈中心](src/pages/img/9.png)
 
 
 
