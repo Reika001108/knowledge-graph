@@ -12,41 +12,43 @@
 
 普通用户
 
-![image-20260511161830974](C:\Users\HX\AppData\Roaming\Typora\typora-user-images\image-20260511161830974.png)
+![](E:\Reika\web\object\vue\src\pages\img\1.png)
 
+![2](E:\Reika\web\object\vue\src\pages\img\2.png)
 
+![3](E:\Reika\web\object\vue\src\pages\img\3.png)
 
-![image-20260511161859968](C:\Users\HX\AppData\Roaming\Typora\typora-user-images\image-20260511161859968.png)
-
-
-
-![image-20260511162004051](C:\Users\HX\AppData\Roaming\Typora\typora-user-images\image-20260511162004051.png)
-
-
-
-![image-20260511162018835](C:\Users\HX\AppData\Roaming\Typora\typora-user-images\image-20260511162018835.png)
+![4](E:\Reika\web\object\vue\src\pages\img\4.png)
 
 
 
 后台管理员用户
 
-![image-20260511162055571](C:\Users\HX\AppData\Roaming\Typora\typora-user-images\image-20260511162055571.png)
+![](E:\Reika\web\object\vue\src\pages\img\5.png)
+
+![6](E:\Reika\web\object\vue\src\pages\img\6.png)
+
+![7](E:\Reika\web\object\vue\src\pages\img\7.png)
+
+![8](E:\Reika\web\object\vue\src\pages\img\8.png)
+
+![9](E:\Reika\web\object\vue\src\pages\img\9.png)
 
 
 
-![image-20260511162127601](C:\Users\HX\AppData\Roaming\Typora\typora-user-images\image-20260511162127601.png)
 
 
 
-![image-20260511162144736](C:\Users\HX\AppData\Roaming\Typora\typora-user-images\image-20260511162144736.png)
 
 
 
-![image-20260511162200977](C:\Users\HX\AppData\Roaming\Typora\typora-user-images\image-20260511162200977.png)
 
 
 
-![image-20260511162216983](C:\Users\HX\AppData\Roaming\Typora\typora-user-images\image-20260511162216983.png)
+
+
+
+
 
 
 
